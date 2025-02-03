@@ -7,10 +7,10 @@ const Quiz = () => {
   const [showScore, setShowScore] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [timer, setTimer] = useState(60);
-  const [timerActive, setTimerActive] = useState(true);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [timer, setTimer] = useState(10);
+  const [timerActive, setTimerActive] = useState(false);
   const [startGame, setStartGame] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userDetails, setUserDetails] = useState({
     firstName: "",
     lastName: "",
@@ -51,15 +51,18 @@ const Quiz = () => {
       if (nextQuestion < questions.length) {
         setCurrentQuestion(nextQuestion);
         setSelectedOption(null);
+        setTimer(10);
+        setTimerActive(true);
       } else {
         setShowScore(true);
+        setTimerActive(false);
       }
     }, 1000);
   };
 
   useEffect(() => {
     let timerInterval;
-    if (timerActive && timer > 0) {
+    if (startGame && timerActive && timer > 0) {
       timerInterval = setInterval(() => {
         setTimer((prevTimer) => prevTimer - 1);
       }, 1000);
@@ -69,38 +72,42 @@ const Quiz = () => {
         const nextQuestion = currentQuestion + 1;
         if (nextQuestion < questions.length) {
           setCurrentQuestion(nextQuestion);
-          setTimer(60);
+          setTimer(10);
           setSelectedOption(null);
           setTimerActive(true);
         } else {
           setShowScore(true);
+          setTimerActive(false);
         }
       }, 1000);
     }
     return () => clearInterval(timerInterval);
-  }, [timerActive, timer, currentQuestion, questions.length]);
+  }, [startGame, timerActive, timer, currentQuestion, questions.length]);
 
   const handleLogin = (e) => {
     e.preventDefault();
     const nameRegex = /^[a-zA-Z]+$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
     if (!userDetails.firstName || !userDetails.lastName || !userDetails.email) {
       alert("Please fill out all fields.");
       return;
     }
-    if (!nameRegex.test(userDetails.firstName)) {
-      alert("First Name must only contain letters. No numbers or symbols are allowed.");
+    if (!nameRegex.test(userDetails.firstName) || !nameRegex.test(userDetails.lastName)) {
+      alert("Name must contain only letters.");
       return;
     }
-    if (!nameRegex.test(userDetails.lastName)) {
-      alert("Last Name must only contain letters. No numbers or symbols are allowed.");
-      return;
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(userDetails.email)) {
-      alert("Please enter a valid email address (e.g., example@example.com).");
+      alert("Invalid email format.");
       return;
     }
+    
     setIsLoggedIn(true);
+  };
+
+  const handleStartGame = () => {
+    setStartGame(true);
+    setTimerActive(true);
   };
 
   if (!isLoggedIn) {
@@ -135,7 +142,7 @@ const Quiz = () => {
               required
             />
           </label>
-          <button type="submit">Login</button>
+          <button type="submit">Sign In</button>
         </form>
       </div>
     );
@@ -145,7 +152,7 @@ const Quiz = () => {
     return (
       <div className="start-game-container">
         <h1>Welcome {userDetails.firstName}!</h1>
-        <button onClick={() => setStartGame(true)}>Start Game</button>
+        <button onClick={handleStartGame}>Start Game</button>
       </div>
     );
   }
@@ -159,9 +166,7 @@ const Quiz = () => {
       <h1>MindMaze</h1>
       {!showScore && (
         <div className="timer-section">
-          <span role="img" aria-label="clock">
-            🕒
-          </span>
+          <span role="img" aria-label="clock"> 🕒 </span>
           <span>{timer} seconds</span>
         </div>
       )}
